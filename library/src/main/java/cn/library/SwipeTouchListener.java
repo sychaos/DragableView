@@ -1,19 +1,3 @@
-/*
- * Copyright 2013 Google Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package cn.library;
 
 import android.animation.Animator;
@@ -25,7 +9,7 @@ import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 
-public class SwipeDismissTouchListener implements View.OnTouchListener {
+public class SwipeTouchListener implements View.OnTouchListener {
     // Cached ViewConfiguration and system-wide constant values
     private int mSlop;
     private int mMinFlingVelocity;
@@ -50,26 +34,25 @@ public class SwipeDismissTouchListener implements View.OnTouchListener {
 
     public interface DismissCallbacks {
 
+        boolean canSwipe();
+
         void onDismiss(View view, boolean toRight);
 
         void onSwiping(float degree);
     }
 
-    public SwipeDismissTouchListener(DismissCallbacks callbacks) {
-        mCallbacks = callbacks;
-    }
-
-    public void setView(View mView) {
-        this.mView = mView;
-        ViewConfiguration vc = ViewConfiguration.get(mView.getContext());
+    public SwipeTouchListener(View view, DismissCallbacks callbacks) {
+        ViewConfiguration vc = ViewConfiguration.get(view.getContext());
 
         //getScaledTouchSlop是一个距离，表示滑动的时候，
         // 手的移动要大于这个距离才开始移动控件。如果小于这个距离就不触发移动控件，如viewpager就是用这个距离来判断用户是否翻页
         mSlop = vc.getScaledTouchSlop();
         mMinFlingVelocity = vc.getScaledMinimumFlingVelocity() * 16;
         mMaxFlingVelocity = vc.getScaledMaximumFlingVelocity();
-        mAnimationTime = mView.getContext().getResources().getInteger(
+        mAnimationTime = view.getContext().getResources().getInteger(
                 android.R.integer.config_shortAnimTime);
+        mView = view;
+        mCallbacks = callbacks;
     }
 
     @Override
@@ -93,13 +76,16 @@ public class SwipeDismissTouchListener implements View.OnTouchListener {
                 mDownX = motionEvent.getRawX();
                 mDownY = motionEvent.getRawY();
                 // 这个token并木有用到
-                mVelocityTracker = VelocityTracker.obtain();
-                mVelocityTracker.addMovement(motionEvent);
+                if (mCallbacks.canSwipe()) {
+                    mVelocityTracker = VelocityTracker.obtain();
+                    mVelocityTracker.addMovement(motionEvent);
+                }
                 return false;
             }
 
             case MotionEvent.ACTION_UP: {
                 if (mVelocityTracker == null) {
+                    mView.performClick();
                     break;
                 }
 
@@ -143,7 +129,6 @@ public class SwipeDismissTouchListener implements View.OnTouchListener {
                             .translationX(dismissRight ? mViewWidth : -mViewWidth)
                             .translationY(dismissTop ? mViewHeight : -mViewHeight)
                             .rotation(mTiltEnabled ? (dismissRight ? 45 : -45) : 0f)
-                            .alpha(0)
                             .setDuration(mAnimationTime)
                             .setListener(new AnimatorListenerAdapter() {
                                 @Override
@@ -159,7 +144,6 @@ public class SwipeDismissTouchListener implements View.OnTouchListener {
                             .translationX(0)
                             .translationY(0)
                             .rotation(0)
-                            .alpha(1)
                             .setDuration(mAnimationTime)
                             .setListener(null);
                     mCallbacks.onSwiping(1);
@@ -177,6 +161,7 @@ public class SwipeDismissTouchListener implements View.OnTouchListener {
             case MotionEvent.ACTION_CANCEL: {
                 //如果没走ACTION_DOWN 无视他
                 if (mVelocityTracker == null) {
+                    mView.performClick();
                     break;
                 }
 
@@ -185,7 +170,6 @@ public class SwipeDismissTouchListener implements View.OnTouchListener {
                         .translationX(0)
                         .translationY(0)
                         .rotation(0)
-                        .alpha(1)
                         .setDuration(mAnimationTime)
                         .setListener(null);
                 mCallbacks.onSwiping(1);
@@ -202,6 +186,7 @@ public class SwipeDismissTouchListener implements View.OnTouchListener {
             case MotionEvent.ACTION_MOVE: {
                 //如果没走ACTION_DOWN 无视他
                 if (mVelocityTracker == null) {
+                    mView.performClick();
                     break;
                 }
 
@@ -233,7 +218,6 @@ public class SwipeDismissTouchListener implements View.OnTouchListener {
                     mView.setRotation(mTiltEnabled ? 45f * deltaX / mViewWidth : 0f);
                     //设置透明度
                     float minAlpha = Math.min(1f - 2f * Math.abs(deltaY) / mViewHeight, 1f - 2f * Math.abs(deltaX) / mViewWidth);
-                    mView.setAlpha(Math.max(0f, Math.min(1f, minAlpha)));
 
                     mCallbacks.onSwiping(Math.max(0f, Math.min(1f, minAlpha)));
                     return true;
@@ -257,7 +241,6 @@ public class SwipeDismissTouchListener implements View.OnTouchListener {
                 //回调
                 mCallbacks.onDismiss(mView, toRight);
                 //重置View 如果你在onDismiss中dimiss了dialog是看不到效果的
-                mView.setAlpha(1f);
                 mView.setTranslationX(0);
                 mView.setTranslationY(0);
                 mView.setRotation(0);
@@ -266,7 +249,6 @@ public class SwipeDismissTouchListener implements View.OnTouchListener {
             }
         });
 
-        // TODO 防止View的动画导致的长度变化 并不确定
         animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator valueAnimator) {
