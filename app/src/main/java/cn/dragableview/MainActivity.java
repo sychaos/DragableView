@@ -6,7 +6,7 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.Toast;
 
-import cn.library.SwipeTouchListener;
+import cn.library.DragableListener;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -17,7 +17,7 @@ public class MainActivity extends AppCompatActivity {
 
         ImageView logoCloudist = (ImageView) findViewById(R.id.logo_cloudist);
 
-        logoCloudist.setOnTouchListener(new SwipeTouchListener(logoCloudist, new SwipeTouchListener.DismissCallbacks() {
+        logoCloudist.setOnTouchListener(new DragableListener(logoCloudist, new DragableListener.DismissCallbacks() {
             @Override
             public boolean canSwipe() {
                 return true;

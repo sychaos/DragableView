@@ -9,7 +9,7 @@ import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 
-public class SwipeTouchListener implements View.OnTouchListener {
+public class DragableListener implements View.OnTouchListener {
     // Cached ViewConfiguration and system-wide constant values
     private int mSlop;
     private int mMinFlingVelocity;
@@ -41,7 +41,7 @@ public class SwipeTouchListener implements View.OnTouchListener {
         void onSwiping(float degree);
     }
 
-    public SwipeTouchListener(View view, DismissCallbacks callbacks) {
+    public DragableListener(View view, DismissCallbacks callbacks) {
         ViewConfiguration vc = ViewConfiguration.get(view.getContext());
 
         //getScaledTouchSlop是一个距离，表示滑动的时候，
