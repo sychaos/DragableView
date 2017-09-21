@@ -7,6 +7,7 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import cn.library.DragableListener;
+import cn.library.ElasticListener;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -17,7 +18,7 @@ public class MainActivity extends AppCompatActivity {
 
         ImageView logoCloudist = (ImageView) findViewById(R.id.logo_cloudist);
 
-        logoCloudist.setOnTouchListener(new DragableListener(logoCloudist, new DragableListener.DismissCallbacks() {
+        logoCloudist.setOnTouchListener(new ElasticListener(logoCloudist, new ElasticListener.DismissCallbacks() {
             @Override
             public boolean canSwipe() {
                 return true;
